@@ -1,13 +1,16 @@
 package com.servicios.sistemaregistro.service;
 
+import com.servicios.sistemaregistro.dto.ResumenDTO;
 import com.servicios.sistemaregistro.dto.ServicioDTO;
 import com.servicios.sistemaregistro.exception.ValidacionException;
 import com.servicios.sistemaregistro.model.Servicio;
+import com.servicios.sistemaregistro.model.Usuario;
 import com.servicios.sistemaregistro.repository.ServicioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class ServicioService {
@@ -82,5 +85,68 @@ public class ServicioService {
         }
         //Guardamos el objeto y nos devuelve el objeto con su ID generado
         return servicioRepository.save(servicio);
+    }
+
+    //Esperamos que recba el usuario desde el controller para que se le de la lista de sus registro de servicio
+    public List<Servicio> obtenerSemanaActual(Usuario usuario) {
+        LocalDate hoy = LocalDate.now();
+        //DayOfWeek es un enum que representa los dias de la semana
+        //Usamos minusDays para restar una cierta cantidad de dias (los de hoy) - 1
+
+        LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1);
+
+        //le sumamos 6 al dia lunes (es nuestro dia domingo)
+        LocalDate domingo = lunes.plusDays(6);
+
+        // Accedemos a el metodo de ServicioRepository para encontrar los servicios entre
+        // el lunes y domingo
+
+        List<Servicio> servicios = servicioRepository.findByUsuarioAndFechaServicioBetween(usuario, lunes, domingo);
+         return servicios;
+    }
+
+    /** Metodo para obtener el historial del usuario, pasamos usuario por argumento */
+    public List<Servicio> obtenerHistorial(Usuario usuario) {
+        //Definimos el dia de hoy
+        LocalDate hoy = LocalDate.now();
+        //Definimos el dia lunes de semana actual
+        LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1);
+        //Pues el fin del historial sera lunes-1
+        LocalDate finHistorial = lunes.minusDays(1);
+        //El inicio del historial sera 30 dias menos apartir de hoy
+        LocalDate inicioHistorial = hoy.minusDays(30);
+        List<Servicio> servicios = servicioRepository.findByUsuarioAndFechaServicioBetween(usuario, inicioHistorial, finHistorial);
+        return servicios;
+    }
+
+    /**creamos nuestro metodo para guardar la suma de montos y retorna un dto para las 3 variables */
+    public ResumenDTO calcularResumen(List<Servicio> servicios) {
+        //Inicializamos en 0 nuestras 3 variables
+        BigDecimal totalCorporativo = BigDecimal.ZERO;
+        BigDecimal totalB4 = BigDecimal.ZERO;
+        BigDecimal peajesKusi = BigDecimal.ZERO;
+
+        //Recorremos la lista
+        for(Servicio servicio : servicios) {
+            //Si el codigo del servicio contiene id, sumamos
+            if(servicio.getCodigoServicio().contains("id")) {
+                totalCorporativo = totalCorporativo.add(servicio.getMontoServicio());
+            }
+            //Si el codigo del servicio contiene unicamente numeros, sumamos
+            if(servicio.getCodigoServicio().matches("[0-9]+")) {
+                totalB4 = totalB4.add(servicio.getMontoServicio());
+            }
+            //Si el tipo de servicio es Kusi y Peaje es true, sumamos el monto del peaje de Kusi
+            if("Kusi".equals(servicio.getTipoServicio()) && servicio.getPeaje()) {
+                peajesKusi = peajesKusi.add(servicio.getMontoPeaje());
+            }
+        }
+        //Creamos nuestro objeto resumen de ResumenDTO
+        ResumenDTO resumen = new ResumenDTO();
+        //Guardamos los valores
+        resumen.setTotalCorporativo(totalCorporativo);
+        resumen.setTotalB4(totalB4);
+        resumen.setPeajesKusi(peajesKusi);
+        return resumen;
     }
 }
