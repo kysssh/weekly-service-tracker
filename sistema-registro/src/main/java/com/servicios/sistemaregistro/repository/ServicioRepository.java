@@ -4,6 +4,7 @@ import com.servicios.sistemaregistro.model.Servicio;
 import com.servicios.sistemaregistro.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,4 +29,8 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long> {
      * Usa LocalDateTime por su mejor integración con JPA y PostgreSQL
      */
     void deleteByCreatedAtBefore (LocalDateTime tiempo);
+
+    /** Busca los servicio de la semana actual de un usuario en especifico */
+    List<Servicio> findByUsuarioAndFechaServicioBetween(Usuario usuario, LocalDate
+                                                              inicio, LocalDate fin);
 }
