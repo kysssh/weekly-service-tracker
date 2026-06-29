@@ -2,6 +2,7 @@ package com.servicios.sistemaregistro.service;
 
 import com.servicios.sistemaregistro.dto.ResumenDTO;
 import com.servicios.sistemaregistro.dto.ServicioDTO;
+import com.servicios.sistemaregistro.exception.ServicioNoExisteException;
 import com.servicios.sistemaregistro.exception.ValidacionException;
 import com.servicios.sistemaregistro.model.Servicio;
 import com.servicios.sistemaregistro.model.Usuario;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ServicioService {
@@ -148,5 +150,27 @@ public class ServicioService {
         resumen.setTotalB4(totalB4);
         resumen.setPeajesKusi(peajesKusi);
         return resumen;
+    }
+
+    public void eliminarServicio(Long id) {
+        servicioRepository.deleteById(id);
+    }
+
+    public Servicio editarServicio(Long id, ServicioDTO servicioDto) {
+        Optional<Servicio> servicio = servicioRepository.findById(id);
+        if(servicio.isEmpty()) {
+            throw new ServicioNoExisteException("El servicio no existe.");
+        }
+
+        Servicio servicioExiste = servicio.get();
+        servicioExiste.setFechaServicio(servicioDto.getFechaServicio());
+        servicioExiste.setCodigoServicio(servicioDto.getCodigo());
+        servicioExiste.setTipoServicio(servicioDto.getTipoServicio());
+        servicioExiste.setMontoServicio(servicioDto.getMontoServicio());
+        servicioExiste.setPeaje(servicioDto.getPeaje());
+        servicioExiste.setDistrito(servicioDto.getDistrito());
+        servicioExiste.setMontoPeaje(servicioDto.getMontoPeaje());
+        servicioRepository.save(servicioExiste);
+        return servicioExiste;
     }
 }
