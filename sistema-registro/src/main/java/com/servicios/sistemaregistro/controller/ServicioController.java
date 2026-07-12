@@ -5,6 +5,7 @@ import com.servicios.sistemaregistro.model.Servicio;
 import com.servicios.sistemaregistro.service.ServicioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,13 +27,16 @@ public class ServicioController {
 
     @GetMapping("/semana-actual")
     public ResponseEntity<List<Servicio>> obtenerSemanaActual() {
-        List<Servicio> resultado = servicioService.obtenerSemanaActual(null);
+        // Leemos el nombreUsuario que el filtro JWT depositó en el SecurityContext.
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Servicio> resultado = servicioService.obtenerSemanaActual(nombreUsuario);
         return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/historial")
     public ResponseEntity<List<Servicio>> obtenerHistorial() {
-        List<Servicio> resultado = servicioService.obtenerHistorial(null);
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Servicio> resultado = servicioService.obtenerHistorial(nombreUsuario);
         return ResponseEntity.ok(resultado);
     }
 

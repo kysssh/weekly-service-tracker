@@ -7,6 +7,7 @@ import com.servicios.sistemaregistro.exception.ValidacionException;
 import com.servicios.sistemaregistro.model.Servicio;
 import com.servicios.sistemaregistro.model.Usuario;
 import com.servicios.sistemaregistro.repository.ServicioRepository;
+import com.servicios.sistemaregistro.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,8 +19,10 @@ import java.util.Optional;
 public class ServicioService {
     private final ServicioRepository servicioRepository;
 
-    public ServicioService(ServicioRepository servicioRepository) {
+    private final UsuarioRepository usuarioRepository;
+    public ServicioService(ServicioRepository servicioRepository, UsuarioRepository usuarioRepository) {
         this.servicioRepository = servicioRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public Servicio registrarServicio(ServicioDTO dto) {
@@ -90,32 +93,27 @@ public class ServicioService {
     }
 
     //Esperamos que recba el usuario desde el controller para que se le de la lista de sus registro de servicio
-    public List<Servicio> obtenerSemanaActual(Usuario usuario) {
+    public List<Servicio> obtenerSemanaActual(String nombreUsuario) {
+        // Buscamos el objeto Usuario real a partir del nombre que viene del SecurityContext.
+        Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
+                .orElseThrow(() -> new ServicioNoExisteException("Usuario no encontrado."));
+
         LocalDate hoy = LocalDate.now();
-        //DayOfWeek es un enum que representa los dias de la semana
-        //Usamos minusDays para restar una cierta cantidad de dias (los de hoy) - 1
-
         LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1);
-
-        //le sumamos 6 al dia lunes (es nuestro dia domingo)
         LocalDate domingo = lunes.plusDays(6);
 
-        // Accedemos a el metodo de ServicioRepository para encontrar los servicios entre
-        // el lunes y domingo
-
         List<Servicio> servicios = servicioRepository.findByUsuarioAndFechaServicioBetween(usuario, lunes, domingo);
-         return servicios;
+        return servicios;
     }
 
     /** Metodo para obtener el historial del usuario, pasamos usuario por argumento */
-    public List<Servicio> obtenerHistorial(Usuario usuario) {
-        //Definimos el dia de hoy
+    public List<Servicio> obtenerHistorial(String nombreUsuario) {
+        Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
+                .orElseThrow(() -> new ServicioNoExisteException("Usuario no encontrado."));
+
         LocalDate hoy = LocalDate.now();
-        //Definimos el dia lunes de semana actual
         LocalDate lunes = hoy.minusDays(hoy.getDayOfWeek().getValue() - 1);
-        //Pues el fin del historial sera lunes-1
         LocalDate finHistorial = lunes.minusDays(1);
-        //El inicio del historial sera 30 dias menos apartir de hoy
         LocalDate inicioHistorial = hoy.minusDays(30);
         List<Servicio> servicios = servicioRepository.findByUsuarioAndFechaServicioBetween(usuario, inicioHistorial, finHistorial);
         return servicios;
