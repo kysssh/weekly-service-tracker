@@ -20,14 +20,15 @@ public class ServicioService {
     private final ServicioRepository servicioRepository;
 
     private final UsuarioRepository usuarioRepository;
+
     public ServicioService(ServicioRepository servicioRepository, UsuarioRepository usuarioRepository) {
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Servicio registrarServicio(ServicioDTO dto) {
+    public Servicio registrarServicio(ServicioDTO dto, String nombreUsuario) {
         //Validamos que el codigo del servicio no sea vacio
-        if(dto.getCodigo()==null || dto.getCodigo().isBlank()) {
+        if (dto.getCodigo() == null || dto.getCodigo().isBlank()) {
             throw new ValidacionException("El codigo de servicio es obligatorio.");
         }
 
@@ -37,42 +38,50 @@ public class ServicioService {
                 .replace(" ", "")
                 .trim();
         //Validamos que distrito no sea vacio
-        if(dto.getDistrito() == null || dto.getDistrito().isBlank()) {
+        if (dto.getDistrito() == null || dto.getDistrito().isBlank()) {
             throw new ValidacionException("El distrito es obligatorio.");
         }
         //Validamos que el tipo de servicio no sea vacio
-        if(dto.getTipoServicio() == null || dto.getTipoServicio().isBlank()) {
+        if (dto.getTipoServicio() == null || dto.getTipoServicio().isBlank()) {
             throw new ValidacionException("El tipo de servicio es obligatorio.");
         }
         //Validamos que peaje sea true o false
-        if(dto.getPeaje() == null) {
+        if (dto.getPeaje() == null) {
             throw new ValidacionException("Debe indicar si hay peaje o no");
         }
         //Validamos que monto peaje no sea vacio y sea estrictamente mayor a 0
-        if(dto.getPeaje() && (dto.getMontoPeaje() == null ||
-                dto.getMontoPeaje().compareTo(BigDecimal.ZERO)<=0)) {
+        if (dto.getPeaje() && (dto.getMontoPeaje() == null ||
+                dto.getMontoPeaje().compareTo(BigDecimal.ZERO) <= 0)) {
             throw new ValidacionException("El monto del peaje debe ser mayor a 0.");
         }
         //Validamos que monto servicio no sea vacio y sea estrictamente mayor a 0
-        if(dto.getMontoServicio() == null ||
-                dto.getMontoServicio().compareTo(BigDecimal.ZERO)<=0) {
+        if (dto.getMontoServicio() == null ||
+                dto.getMontoServicio().compareTo(BigDecimal.ZERO) <= 0) {
             throw new ValidacionException("El monto del servicio debe ser mayor a 0");
         }
         //Creamos nuestro maximo y minimo de registro de fechas
         LocalDate hoy = LocalDate.now();
         LocalDate minPermitido = hoy.minusWeeks(1);
         //Validamos que el registro de la fecha no este vacia
-        if(dto.getFechaServicio() == null) {
+        if (dto.getFechaServicio() == null) {
             throw new ValidacionException("La fecha del servicio es obligatoria.");
         }
         //Validamos que el registro de los servicios sea como maximo hoy
-        if(dto.getFechaServicio().isAfter(hoy)) {
+        if (dto.getFechaServicio().isAfter(hoy)) {
             throw new ValidacionException("la fecha no puede ser futura");
         }
         //Validamos que el registro de los servicios sea como minimo una semana anterior
-        if(dto.getFechaServicio().isBefore(minPermitido)) {
+        if (dto.getFechaServicio().isBefore(minPermitido)) {
             throw new ValidacionException("La fecha no puede ser mayor a 1 semana atras");
         }
+
+        // NUEVO: buscamos el objeto Usuario completo a partir del nombreUsuario
+        // que viene del JWT (vía SecurityContextHolder en el controller).
+        // Esto es lo que faltaba: sin esto, servicio.setUsuario() nunca se llamaba,
+        // y la columna id_usuario llegaba null a la base de datos.
+        Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
+                .orElseThrow(() -> new ServicioNoExisteException("Usuario no encontrado."));
+
         //Creamos el objeto servicio, se guardara en la base de datos
         //Guardamos los campos
         Servicio servicio = new Servicio();
@@ -82,8 +91,10 @@ public class ServicioService {
         servicio.setPeaje(dto.getPeaje());
         servicio.setMontoServicio(dto.getMontoServicio());
         servicio.setFechaServicio(dto.getFechaServicio());
+        servicio.setUsuario(usuario); // NUEVO: asignamos el dueño del servicio antes de guardar
+
         //Logica del peaje, guardamos el monto del peaje si peaje es true
-        if(dto.getPeaje()) {
+        if (dto.getPeaje()) {
             servicio.setMontoPeaje(dto.getMontoPeaje());
         } else {
             servicio.setMontoPeaje(BigDecimal.ZERO);
@@ -94,7 +105,6 @@ public class ServicioService {
 
     //Esperamos que recba el usuario desde el controller para que se le de la lista de sus registro de servicio
     public List<Servicio> obtenerSemanaActual(String nombreUsuario) {
-        // Buscamos el objeto Usuario real a partir del nombre que viene del SecurityContext.
         Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
                 .orElseThrow(() -> new ServicioNoExisteException("Usuario no encontrado."));
 
@@ -106,7 +116,9 @@ public class ServicioService {
         return servicios;
     }
 
-    /** Metodo para obtener el historial del usuario, pasamos usuario por argumento */
+    /**
+     * Metodo para obtener el historial del usuario, pasamos usuario por argumento
+     */
     public List<Servicio> obtenerHistorial(String nombreUsuario) {
         Usuario usuario = usuarioRepository.findByNombreUsuario(nombreUsuario)
                 .orElseThrow(() -> new ServicioNoExisteException("Usuario no encontrado."));
@@ -119,48 +131,60 @@ public class ServicioService {
         return servicios;
     }
 
-    /**creamos nuestro metodo para guardar la suma de montos y retorna un dto para las 3 variables */
+    /**
+     * creamos nuestro metodo para guardar la suma de montos y retorna un dto para las 3 variables
+     */
     public ResumenDTO calcularResumen(List<Servicio> servicios) {
-        //Inicializamos en 0 nuestras 3 variables
         BigDecimal totalCorporativo = BigDecimal.ZERO;
         BigDecimal totalB4 = BigDecimal.ZERO;
         BigDecimal peajesKusi = BigDecimal.ZERO;
 
-        //Recorremos la lista
-        for(Servicio servicio : servicios) {
-            //Si el codigo del servicio contiene id, sumamos
-            if(servicio.getCodigoServicio().contains("id")) {
+        for (Servicio servicio : servicios) {
+            if (servicio.getCodigoServicio().contains("id")) {
                 totalCorporativo = totalCorporativo.add(servicio.getMontoServicio());
             }
-            //Si el codigo del servicio contiene unicamente numeros, sumamos
-            if(servicio.getCodigoServicio().matches("[0-9]+")) {
+            if (servicio.getCodigoServicio().matches("[0-9]+")) {
                 totalB4 = totalB4.add(servicio.getMontoServicio());
             }
-            //Si el tipo de servicio es Kusi y Peaje es true, sumamos el monto del peaje de Kusi
-            if("Kusi".equals(servicio.getTipoServicio()) && servicio.getPeaje()) {
+            if ("Kusi".equals(servicio.getTipoServicio()) && servicio.getPeaje()) {
                 peajesKusi = peajesKusi.add(servicio.getMontoPeaje());
             }
         }
-        //Creamos nuestro objeto resumen de ResumenDTO
         ResumenDTO resumen = new ResumenDTO();
-        //Guardamos los valores
         resumen.setTotalCorporativo(totalCorporativo);
         resumen.setTotalB4(totalB4);
         resumen.setPeajesKusi(peajesKusi);
         return resumen;
     }
 
-    public void eliminarServicio(Long id) {
+    public void eliminarServicio(Long id, String nombreUsuario) {
+        Servicio servicio = servicioRepository.findById(id)
+                .orElseThrow(() -> new ServicioNoExisteException("El servicio no existe."));
+
+        // Verificamos que el servicio encontrado pertenezca al usuario autenticado.
+        // Si no coincide, respondemos EXACTAMENTE igual que si no existiera —
+        // así no revelamos a un atacante que el id sí existe, solo que no es suyo.
+        if (!servicio.getUsuario().getNombreUsuario().equals(nombreUsuario)) {
+            throw new ServicioNoExisteException("El servicio no existe.");
+        }
+
         servicioRepository.deleteById(id);
     }
 
-    public Servicio editarServicio(Long id, ServicioDTO servicioDto) {
+
+    public Servicio editarServicio(Long id, ServicioDTO servicioDto, String nombreUsuario) {
         Optional<Servicio> servicio = servicioRepository.findById(id);
-        if(servicio.isEmpty()) {
+        if (servicio.isEmpty()) {
             throw new ServicioNoExisteException("El servicio no existe.");
         }
 
         Servicio servicioExiste = servicio.get();
+
+        // Misma verificación de propiedad antes de permitir la edición.
+        if (!servicioExiste.getUsuario().getNombreUsuario().equals(nombreUsuario)) {
+            throw new ServicioNoExisteException("El servicio no existe.");
+        }
+
         servicioExiste.setFechaServicio(servicioDto.getFechaServicio());
         servicioExiste.setCodigoServicio(servicioDto.getCodigo());
         servicioExiste.setTipoServicio(servicioDto.getTipoServicio());
