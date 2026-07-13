@@ -21,7 +21,8 @@ public class ServicioController {
 
     @PostMapping
     public ResponseEntity<Void> registrarServicio(@RequestBody ServicioDTO servicioDto) {
-        servicioService.registrarServicio(servicioDto);
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        servicioService.registrarServicio(servicioDto, nombreUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -42,13 +43,15 @@ public class ServicioController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarServicio(@PathVariable Long id) {
-        servicioService.eliminarServicio(id);
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        servicioService.eliminarServicio(id, nombreUsuario);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Servicio> editarServicio(@PathVariable Long id, @RequestBody ServicioDTO servicioDto) {
-        Servicio servicioActualizado = servicioService.editarServicio(id, servicioDto);
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        Servicio servicioActualizado = servicioService.editarServicio(id, servicioDto, nombreUsuario);
         return ResponseEntity.ok(servicioActualizado);
     }
 }
