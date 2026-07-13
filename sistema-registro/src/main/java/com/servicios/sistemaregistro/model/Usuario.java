@@ -1,5 +1,6 @@
 package com.servicios.sistemaregistro.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,6 +17,13 @@ public class Usuario {
     private Long id;
 
     private String nombreUsuario;
+
+    // @JsonIgnore: le dice a Jackson que NUNCA incluya este campo al convertir
+    // el objeto a JSON, sin importar desde dónde se esté serializando
+    // (directamente, o indirectamente como parte de otro objeto, como pasa
+    // ahora con Servicio.usuario). Protege el hash del PIN de filtrarse
+    // en cualquier respuesta HTTP, presente o futura.
+    @JsonIgnore
     private String pinHash;
 
 }
