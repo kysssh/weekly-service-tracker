@@ -30,8 +30,17 @@ public class Servicio {
     private BigDecimal montoPeaje;
     private BigDecimal montoServicio;
 
-    @Column(name = "created_at") // usamos @Column para ubicar la columna en la BD
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    // @PrePersist: le dice a JPA "ejecuta este método automáticamente,
+// justo antes de hacer el INSERT en la base de datos".
+// Así garantizamos que TODO Servicio nuevo tenga su fecha de creación,
+// sin depender de que el desarrollador se acuerde de asignarla manualmente.
+    @PrePersist
+    protected void alCrear() {
+        this.createdAt = LocalDateTime.now();
+    }
 
 
 
