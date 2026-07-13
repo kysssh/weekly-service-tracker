@@ -34,7 +34,7 @@ public class AuthController {
             // Generamos el token para este usuario ya autenticado.
             String token = jwtService.generarToken(usuarioDto.getNombreUsuario());
             // Lo envolvemos en el DTO y lo devolvemos con código 200.
-            return ResponseEntity.ok(new TokenResponseDTO());
+            return ResponseEntity.ok(new TokenResponseDTO(token));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
