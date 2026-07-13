@@ -1,0 +1,81 @@
+### Registrar Usuario
+POST http://localhost:8080/usuarios
+Content-Type: application/json
+
+{
+  "nombreUsuario": "percy",
+  "pin": "1234"
+
+}
+
+### Login
+# @name login
+POST http://localhost:8080/auth
+Content-Type: application/json
+
+{
+  "nombreUsuario": "percy",
+  "pin": "1234"
+}
+
+### Registrar Servicio
+POST http://localhost:8080/servicios
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeSIsImlhdCI6MTc4Mzg5NzUzNSwiZXhwIjoxNzgzOTAxMTM1fQ.GFEGDrOvrdJcRFhc7L60V6QdGZCLKyDmDLyDbPLaUYc
+
+{
+  "codigo": "ID-4521",
+  "distrito": "Miraflores",
+  "tipoServicio": "CMV",
+  "peaje": true,
+  "montoServicio": 25.50,
+  "montoPeaje": 3.50,
+  "fechaServicio": "2026-07-10"
+}
+
+### Obtener Semana Actual
+GET http://localhost:8080/servicios/semana-actual
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqdWFuIiwiaWF0IjoxNzgzODk4MjA4LCJleHAiOjE3ODM5MDE4MDh9.NSqLihoNDsPj8cQBtN4IiFd2TK-fGwI6HffUQbuW09M
+
+### Obtener Historial
+GET http://localhost:8080/servicios/historial
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeSIsImlhdCI6MTc4Mzg5Nzc2OSwiZXhwIjoxNzgzOTAxMzY5fQ.8dWElY6hQrGvcDz8eEGKfYbMrCecgkRxZwMcMMcr0wk
+
+
+### Login Juan
+POST http://localhost:8080/auth
+Content-Type: application/json
+
+{
+  "nombreUsuario": "juan",
+  "pin": "5678"
+}
+
+### Intento de eliminar servicio ajeno (debe fallar)
+DELETE http://localhost:8080/servicios/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqdWFuIiwiaWF0IjoxNzgzODk4Nzk5LCJleHAiOjE3ODM5MDIzOTl9.u2DVD5Dz4q4tyruHG8oyaScIUNqw3q2SJFrEdCaNZRc
+
+### Eliminar servicio propio (debe funcionar)
+DELETE http://localhost:8080/servicios/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeSIsImlhdCI6MTc4Mzg5ODg3OSwiZXhwIjoxNzgzOTAyNDc5fQ.pI5fNjGAGHYRLbugnnAZbCixtOtp_DTW5_gVvdwX6E8
+
+### Error: Login con PIN incorrecto
+POST http://localhost:8080/auth
+Content-Type: application/json
+
+{
+  "nombreUsuario": "percy",
+  "pin": "0000"
+}
+
+### Error: Registro de usuario duplicado
+POST http://localhost:8080/usuarios
+Content-Type: application/json
+
+{
+  "nombreUsuario": "percy",
+  "pin": "9999"
+}
+
+### Error: Acceso a endpoint protegido sin token
+GET http://localhost:8080/servicios/semana-actual
