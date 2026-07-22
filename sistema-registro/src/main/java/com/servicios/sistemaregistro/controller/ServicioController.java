@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.servicios.sistemaregistro.dto.ResumenDTO;
 
 import java.util.List;
 
@@ -39,6 +40,13 @@ public class ServicioController {
         String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
         List<Servicio> resultado = servicioService.obtenerHistorial(nombreUsuario);
         return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping("/resumen")
+    public ResponseEntity<ResumenDTO> obtenerResumen() {
+        String nombreUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        ResumenDTO resumen = servicioService.obtenerResumenSemanaActual(nombreUsuario);
+        return ResponseEntity.ok(resumen);
     }
 
     @DeleteMapping("/{id}")

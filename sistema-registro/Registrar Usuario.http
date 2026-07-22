@@ -79,3 +79,22 @@ Content-Type: application/json
 
 ### Error: Acceso a endpoint protegido sin token
 GET http://localhost:8080/servicios/semana-actual
+
+### Obtener Resumen Semana Actual
+GET http://localhost:8080/servicios/resumen
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeSIsImlhdCI6MTc4NDc0NTA2MCwiZXhwIjoxNzg0NzQ4NjYwfQ.u6SpSm_iz9MbVs12HlFl_MQ8m2P0WpodgZ2-8ZJaiuY
+
+### Registrar Servicio (fecha actual, para probar resumen)
+POST http://localhost:8080/servicios
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwZXJjeSIsImlhdCI6MTc4NDc0NTA2MCwiZXhwIjoxNzg0NzQ4NjYwfQ.u6SpSm_iz9MbVs12HlFl_MQ8m2P0WpodgZ2-8ZJaiuY
+
+{
+  "codigo": "789456",
+  "distrito": "San Isidro",
+  "tipoServicio": "Kusi",
+  "peaje": true,
+  "montoServicio": 20.00,
+  "montoPeaje": 5.00,
+  "fechaServicio": "2026-07-22"
+}

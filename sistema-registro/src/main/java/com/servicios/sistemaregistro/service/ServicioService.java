@@ -157,6 +157,13 @@ public class ServicioService {
         return resumen;
     }
 
+    // Método: obtiene los servicios de la semana actual
+    // y calcula el resumen sobre ellos, en un solo paso.
+    public ResumenDTO obtenerResumenSemanaActual(String nombreUsuario) {
+        List<Servicio> serviciosSemana = obtenerSemanaActual(nombreUsuario);
+        return calcularResumen(serviciosSemana);
+    }
+
     public void eliminarServicio(Long id, String nombreUsuario) {
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new ServicioNoExisteException("El servicio no existe."));
