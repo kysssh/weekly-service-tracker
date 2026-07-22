@@ -11,50 +11,72 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-// @Configuration: le dice a Spring "esta clase declara beans, procésala al arrancar".
-// @EnableWebSecurity: activa el sistema de seguridad web de Spring Security en tu aplicación.
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Inyectamos el filtro que ya construimos, para insertarlo en la cadena más abajo.
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    // Bean que ya tenías: el algoritmo de hasheo para PINs.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Este bean define TODA la política de seguridad HTTP de tu aplicación.
+    // define qué orígenes, métodos y headers están permitidos
+    // cuando el navegador hace peticiones "cross-origin" hacia este backend.
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuracion = new CorsConfiguration();
+
+        // Permitimos cualquier puerto de localhost (http o https), sin abrirlo
+        // a internet entero. El patrón "http://localhost:*" cubre Live Server,
+        // el navegador embebido de IntelliJ, o cualquier puerto que uses mientras
+        // se desarrolla el frontend en la computadora.
+        configuracion.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
+
+        // Métodos HTTP que tu frontend va a necesitar usar contra la API.
+        configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // Permitimos cualquier header en la petición — en particular necesitamos
+        // "Authorization" (para el JWT) y "Content-Type" (para el JSON del body).
+        configuracion.setAllowedHeaders(List.of("*"));
+
+        // Aplicamos esta configuración a TODAS las rutas de la API ("/**").
+        UrlBasedCorsConfigurationSource fuente = new UrlBasedCorsConfigurationSource();
+        fuente.registerCorsConfiguration("/**", configuracion);
+        return fuente;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Desactivamos CSRF (protección contra ataques de formularios web tradicionales).
-                // No la necesitamos porque no usamos sesiones ni cookies de navegador: usamos JWT sin estado.
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // Le decimos a Spring que NO cree ni use sesiones HTTP tradicionales.
-                // Cada petición se autentica desde cero usando el token, no se "recuerda" nada entre peticiones.
+                //le decimos a Spring Security que use el bean de CORS
+                // que acabamos de definir arriba, en vez de bloquear todo por defecto.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Aquí definimos qué rutas son públicas y cuáles requieren autenticación.
                 .authorizeHttpRequests(auth -> auth
-                        // permitAll(): estas rutas NO requieren token válido.
                         .requestMatchers("/auth", "/usuarios").permitAll()
-                        // anyRequest().authenticated(): CUALQUIER otra ruta SÍ requiere autenticación.
                         .anyRequest().authenticated()
                 )
 
-                // Insertamos nuestro filtro JWT ANTES del filtro estándar de usuario/contraseña de Spring.
-                // Esto asegura que nuestro filtro se ejecute primero en la cadena, revisando el token
-                // antes de que Spring intente cualquier otro mecanismo de autenticación.
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
