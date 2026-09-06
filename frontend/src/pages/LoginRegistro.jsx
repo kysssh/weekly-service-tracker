@@ -128,32 +128,35 @@ export default function LoginRegistro() {
 
   return (
     <div className="min-h-svh bg-fondo">
-      {/* Header azul marino con acento de ruta y logo centrado */}
+      {/* Cabecera azul marino (#1E3A5F) con el logo de la app en una tarjeta */}
       <header className="relative overflow-hidden bg-header text-header-contraste">
         <TrayectoDecorativo />
         <div className="relative mx-auto flex max-w-md items-center justify-end px-4 pt-3">
           <BotonTema tema={tema} onAlternar={alternarTema} />
         </div>
-        <div className="relative mx-auto flex max-w-md flex-col items-center px-4 pb-20 pt-2 text-center">
-          {logoFallo ? (
-            // Fallback mientras no exista /logo.svg en public.
-            <LogoRuta className="h-16 w-16 text-header-contraste" />
-          ) : (
-            <img
-              src="/logo.svg"
-              alt="Weekly Service Tracker"
-              className="h-16 w-16 object-contain"
-              onError={() => setLogoFallo(true)}
-            />
-          )}
-          <p className="mt-3 text-sm font-medium tracking-wide text-header-contraste/80">
+        <div className="relative mx-auto flex max-w-md flex-col items-center px-4 pb-16 pt-1 text-center">
+          {/* Tarjeta pequeña para que el logo resalte sobre el azul marino */}
+          <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 shadow-lg shadow-black/25 ring-1 ring-white/25 backdrop-blur-sm">
+            {logoFallo ? (
+              // Fallback si la imagen no carga.
+              <LogoRuta className="h-14 w-14 text-white" />
+            ) : (
+              <img
+                src="/icono_nofondo.png"
+                alt="Weekly Service Tracker"
+                className="h-14 w-14 object-contain"
+                onError={() => setLogoFallo(true)}
+              />
+            )}
+          </div>
+          <p className="mt-3 text-sm font-medium tracking-wide text-header-contraste/85">
             Weekly Service Tracker
           </p>
         </div>
       </header>
 
-      {/* Tarjeta blanca superpuesta (relative + z-10 para quedar sobre el header) */}
-      <main className="relative z-10 mx-auto -mt-12 max-w-md px-4 pb-12">
+      {/* Tarjeta blanca superpuesta (relative + z-10 para quedar sobre la cabecera) */}
+      <main className="relative z-10 mx-auto -mt-10 max-w-md px-4 pb-12">
         <div className="rounded-2xl border border-borde bg-superficie p-6 shadow-lg shadow-black/5 sm:p-8">
           <h1 className="font-display text-2xl font-semibold text-texto">
             {esRegistro ? 'Crea tu cuenta' : 'Bienvenido'}
