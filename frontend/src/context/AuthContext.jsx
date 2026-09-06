@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import {
+  CuentaCreadaSinSesion,
   iniciarSesion as apiIniciarSesion,
   registrarUsuario as apiRegistrarUsuario,
 } from '../lib/autenticacion'
@@ -25,19 +26,32 @@ function tokenInicial() {
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(tokenInicial)
 
-  const login = useCallback(async (nombreUsuario, pin) => {
-    const nuevoToken = await apiIniciarSesion(nombreUsuario, pin)
+  const iniciarConToken = useCallback((nuevoToken) => {
+    if (!nuevoToken) throw new Error('El servidor no devolvió un token.')
     guardarToken(nuevoToken)
     setToken(nuevoToken)
   }, [])
 
-  const registrar = useCallback(async (nombreUsuario, pin) => {
-    await apiRegistrarUsuario(nombreUsuario, pin)
-    // El backend no devuelve token al registrar: iniciamos sesión a continuación.
-    const nuevoToken = await apiIniciarSesion(nombreUsuario, pin)
-    guardarToken(nuevoToken)
-    setToken(nuevoToken)
-  }, [])
+  const login = useCallback(
+    async (nombreUsuario, pin) => {
+      iniciarConToken(await apiIniciarSesion(nombreUsuario, pin))
+    },
+    [iniciarConToken],
+  )
+
+  const registrar = useCallback(
+    async (nombreUsuario, pin) => {
+      await apiRegistrarUsuario(nombreUsuario, pin)
+      // La cuenta ya se creó. Si el login automático que sigue falla, avisamos
+      // con un error propio para no decir "no se pudo crear la cuenta".
+      try {
+        iniciarConToken(await apiIniciarSesion(nombreUsuario, pin))
+      } catch {
+        throw new CuentaCreadaSinSesion()
+      }
+    },
+    [iniciarConToken],
+  )
 
   const logout = useCallback(() => {
     borrarToken()

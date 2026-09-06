@@ -4,6 +4,7 @@ import BotonTema from '../components/BotonTema'
 import { useAuth } from '../context/AuthContext'
 import { useTema } from '../hooks/useTema'
 import { ApiError, RedError } from '../lib/api'
+import { CuentaCreadaSinSesion } from '../lib/autenticacion'
 
 /** Ícono de ruta que se usa si aún no existe /logo.svg en public. */
 function LogoRuta({ className }) {
@@ -80,6 +81,7 @@ export default function LoginRegistro() {
   const [enviando, setEnviando] = useState(false)
   const [form, setForm] = useState({ usuario: '', pin: '', confirmar: '' })
   const [error, setError] = useState('')
+  const [aviso, setAviso] = useState('')
 
   const esRegistro = modo === 'registro'
   const destino = location.state?.from?.pathname || '/'
@@ -94,12 +96,14 @@ export default function LoginRegistro() {
   function cambiarModo(nuevoModo) {
     setModo(nuevoModo)
     setError('')
+    setAviso('')
     setForm((f) => ({ ...f, pin: '', confirmar: '' }))
   }
 
   async function enviar(e) {
     e.preventDefault()
     setError('')
+    setAviso('')
 
     const usuario = form.usuario.trim()
     if (!usuario || !form.pin) {
@@ -120,7 +124,14 @@ export default function LoginRegistro() {
       }
       navigate(destino, { replace: true })
     } catch (err) {
-      setError(mensajeDeError(err, esRegistro))
+      if (err instanceof CuentaCreadaSinSesion) {
+        // La cuenta sí se creó: llevamos al usuario a iniciar sesión.
+        setModo('login')
+        setForm((f) => ({ ...f, pin: '', confirmar: '' }))
+        setAviso('Tu cuenta se creó. Inicia sesión con tu usuario y tu PIN.')
+      } else {
+        setError(mensajeDeError(err, esRegistro))
+      }
     } finally {
       setEnviando(false)
     }
@@ -166,6 +177,12 @@ export default function LoginRegistro() {
               ? 'Regístrate para empezar a registrar tus servicios.'
               : 'Ingresa para registrar tus servicios.'}
           </p>
+
+          {aviso && (
+            <p className="mt-4 rounded-lg bg-acento/10 px-3 py-2 text-sm font-medium text-acento">
+              {aviso}
+            </p>
+          )}
 
           <form onSubmit={enviar} className="mt-6 space-y-4" noValidate>
             <div>
