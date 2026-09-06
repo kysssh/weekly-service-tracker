@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+
+/*
+ * Modo oscuro por toggle (clase .dark en <html>), no por preferencia del SO.
+ * Ver design_frontend_swt.md §2 ("modo oscuro opcional a través de un toggle").
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Tokens semánticos crudos. Cambian de valor bajo .dark; las utilidades de
+ * Tailwind (bg-fondo, text-primario, ...) los consumen vía @theme inline.
+ */
+:root {
+  --c-fondo: #f7f8fa; /* gris muy claro, menos fatiga que el blanco puro */
+  --c-superficie: #ffffff; /* tarjetas */
+  --c-primario: #1e3a5f; /* azul marino: confianza, acciones principales */
+  --c-primario-hover: #182f4d;
+  --c-primario-contraste: #ffffff;
+  --c-acento: #0f9b8e; /* verde-azulado: positivo, enlaces, selección */
+  --c-acento-hover: #0c8579;
+  --c-alerta: #d64545; /* rojo suave: errores y acciones destructivas */
+  --c-texto: #1b2430; /* casi negro para máxima legibilidad */
+  --c-texto-suave: #5b6472; /* texto secundario */
+  --c-borde: #e2e5ea;
+  --c-header: #1e3a5f;
+  --c-header-contraste: #ffffff;
+}
+
+.dark {
+  --c-fondo: #101826; /* gris azulado muy oscuro, no negro puro */
+  --c-superficie: #1f2937; /* algo más claro que el fondo: jerarquía de tarjetas */
+  --c-primario: #3b6ea5; /* azul marino aclarado para contraste sobre superficies oscuras */
+  --c-primario-hover: #4a7fb8;
+  --c-primario-contraste: #ffffff;
+  --c-acento: #2bc0b2;
+  --c-acento-hover: #3fd0c2;
+  --c-alerta: #e26a6a;
+  --c-texto: #e6eaf0;
+  --c-texto-suave: #9aa4b2;
+  --c-borde: #2e3a4e;
+  --c-header: #16223a;
+  --c-header-contraste: #e6eaf0;
+}
+
+@theme inline {
+  --color-fondo: var(--c-fondo);
+  --color-superficie: var(--c-superficie);
+  --color-primario: var(--c-primario);
+  --color-primario-hover: var(--c-primario-hover);
+  --color-primario-contraste: var(--c-primario-contraste);
+  --color-acento: var(--c-acento);
+  --color-acento-hover: var(--c-acento-hover);
+  --color-alerta: var(--c-alerta);
+  --color-texto: var(--c-texto);
+  --color-texto-suave: var(--c-texto-suave);
+  --color-borde: var(--c-borde);
+  --color-header: var(--c-header);
+  --color-header-contraste: var(--c-header-contraste);
+
+  /* Cuerpo/datos: fuente neutra y legible. Títulos/números: geométrica sólida. */
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Poppins', 'Inter', system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
