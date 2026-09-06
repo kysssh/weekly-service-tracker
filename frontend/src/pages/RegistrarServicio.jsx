@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { ApiError, RedError } from '../lib/api'
 import { DISTRITOS } from '../lib/distritos'
 import { fechaEnRango, haceUnaSemanaISO, hoyISO } from '../lib/fechas'
+import { parsearMonto } from '../lib/formato'
 import { registrarServicio } from '../lib/servicios'
 
 const TIPOS_SERVICIO = ['CMV', '365', 'Kusi', 'Otros']
@@ -40,19 +41,19 @@ function validar(form) {
   if (!form.distrito) errores.distrito = 'Elige el distrito.'
   if (!form.tipoServicio) errores.tipoServicio = 'Elige el tipo de servicio.'
 
-  const monto = Number(form.montoServicio)
+  const monto = parsearMonto(form.montoServicio)
   if (!form.montoServicio.trim()) {
     errores.montoServicio = 'Escribe el monto del servicio.'
   } else if (!Number.isFinite(monto) || monto <= 0) {
-    errores.montoServicio = 'El monto debe ser mayor a 0.'
+    errores.montoServicio = 'Escribe un monto válido mayor a 0 (ej. 25.50).'
   }
 
   if (hayPeaje) {
-    const peaje = Number(form.montoPeaje)
+    const peaje = parsearMonto(form.montoPeaje)
     if (!form.montoPeaje.trim()) {
       errores.montoPeaje = 'Escribe el monto del peaje.'
     } else if (!Number.isFinite(peaje) || peaje <= 0) {
-      errores.montoPeaje = 'El monto del peaje debe ser mayor a 0.'
+      errores.montoPeaje = 'Escribe un monto válido mayor a 0 (ej. 3.50).'
     }
   }
 
@@ -93,8 +94,8 @@ export default function RegistrarServicio() {
         distrito: form.distrito,
         tipoServicio: form.tipoServicio,
         peaje: hayPeaje,
-        montoServicio: Number(form.montoServicio),
-        montoPeaje: hayPeaje ? Number(form.montoPeaje) : null,
+        montoServicio: parsearMonto(form.montoServicio),
+        montoPeaje: hayPeaje ? parsearMonto(form.montoPeaje) : null,
         fechaServicio: form.fechaServicio,
       })
       navigate('/servicios')
@@ -207,8 +208,6 @@ export default function RegistrarServicio() {
             value={form.montoServicio}
             onChange={actualizar('montoServicio')}
             placeholder="0.00"
-            min="0"
-            step="0.01"
             error={errores.montoServicio}
             disabled={enviando}
           />
@@ -221,8 +220,6 @@ export default function RegistrarServicio() {
               value={form.montoPeaje}
               onChange={actualizar('montoPeaje')}
               placeholder="0.00"
-              min="0"
-              step="0.01"
               error={errores.montoPeaje}
               disabled={enviando}
             />

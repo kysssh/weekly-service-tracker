@@ -9,6 +9,21 @@ export function formatearSoles(monto) {
   return `S/ ${soles.format(Number.isFinite(n) ? n : 0)}`
 }
 
+/**
+ * Convierte lo que el usuario escribe en un campo de monto a número.
+ * Acepta coma o punto como separador decimal ("90,50" y "90.50" -> 90.5).
+ * Devuelve NaN si no es un número válido.
+ */
+export function parsearMonto(texto) {
+  const s = String(texto ?? '').trim()
+  if (!s) return NaN
+  // Si solo hay coma, es el separador decimal. Si hay punto (con o sin coma),
+  // la coma se trata como separador de miles y se quita.
+  const normalizado =
+    s.includes(',') && !s.includes('.') ? s.replace(',', '.') : s.replace(/,/g, '')
+  return Number(normalizado)
+}
+
 const fechaLarga = new Intl.DateTimeFormat('es-PE', {
   weekday: 'short',
   day: '2-digit',
