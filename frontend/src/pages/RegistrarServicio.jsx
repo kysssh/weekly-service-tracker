@@ -104,11 +104,16 @@ export default function RegistrarServicio() {
         logout()
         return
       }
-      setErrorEnvio(
-        err instanceof RedError
-          ? 'No se pudo conectar con el servidor.'
-          : 'No se pudo registrar el servicio. Revisa los datos e intenta de nuevo.',
-      )
+      if (err instanceof RedError) {
+        setErrorEnvio('No se pudo conectar con el servidor.')
+      } else if (err instanceof ApiError && err.status === 400 && err.cuerpo?.mensaje) {
+        // El backend devuelve el motivo concreto de la validación.
+        setErrorEnvio(err.cuerpo.mensaje)
+      } else {
+        setErrorEnvio(
+          'No se pudo registrar el servicio. Revisa los datos e intenta de nuevo.',
+        )
+      }
     } finally {
       setEnviando(false)
     }

@@ -1,5 +1,6 @@
 package com.servicios.sistemaregistro.exception;
 
+import com.servicios.sistemaregistro.dto.ErrorDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,5 +21,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ServicioNoExisteException.class)
     public ResponseEntity<Void> manejarServicioNoExiste() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    // Datos invalidos al registrar o editar un servicio: 400 con el mensaje
+    // concreto, para que el frontend pueda decir qué campo está mal en vez de
+    // un 500 opaco.
+    @ExceptionHandler(ValidacionException.class)
+    public ResponseEntity<ErrorDTO> manejarValidacion(ValidacionException ex) {
+        return ResponseEntity.badRequest().body(new ErrorDTO(ex.getMessage()));
     }
 }
