@@ -11,6 +11,7 @@ import com.servicios.sistemaregistro.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -131,29 +132,57 @@ public class ServicioService {
         return servicios;
     }
 
+    // Porcentaje que se descuenta de la base para obtener la ganancia neta.
+    private static final BigDecimal DESCUENTO_GANANCIA = new BigDecimal("0.25");
+
     /**
-     * creamos nuestro metodo para guardar la suma de montos y retorna un dto para las 3 variables
+     * Calcula los sub-totales por origen y la ganancia de la semana.
+     *
+     * La ganancia se rige por:
+     *   base     = suma de montoServicio de los servicios que son Kusi, CMV
+     *              o cuyo codigo contiene "id"
+     *   ganancia = base - 25% de la base
+     * Cada servicio que califica se cuenta una sola vez, aunque cumpla mas de
+     * una condicion (por ejemplo un CMV con codigo "ID-...").
      */
     public ResumenDTO calcularResumen(List<Servicio> servicios) {
         BigDecimal totalCorporativo = BigDecimal.ZERO;
         BigDecimal totalB4 = BigDecimal.ZERO;
         BigDecimal peajesKusi = BigDecimal.ZERO;
+        BigDecimal baseGanancia = BigDecimal.ZERO;
 
         for (Servicio servicio : servicios) {
-            if (servicio.getCodigoServicio().contains("id")) {
+            String codigo = servicio.getCodigoServicio();
+            String tipo = servicio.getTipoServicio();
+
+            if (codigo.contains("id")) {
                 totalCorporativo = totalCorporativo.add(servicio.getMontoServicio());
             }
-            if (servicio.getCodigoServicio().matches("[0-9]+")) {
+            if (codigo.matches("[0-9]+")) {
                 totalB4 = totalB4.add(servicio.getMontoServicio());
             }
-            if ("Kusi".equals(servicio.getTipoServicio()) && servicio.getPeaje()) {
+            if ("Kusi".equals(tipo) && servicio.getPeaje()) {
                 peajesKusi = peajesKusi.add(servicio.getMontoPeaje());
             }
+
+            boolean cuentaParaGanancia =
+                    "Kusi".equals(tipo) || "CMV".equals(tipo) || codigo.contains("id");
+            if (cuentaParaGanancia) {
+                baseGanancia = baseGanancia.add(servicio.getMontoServicio());
+            }
         }
+
+        BigDecimal totalBruto = baseGanancia.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal ganancia = baseGanancia
+                .subtract(baseGanancia.multiply(DESCUENTO_GANANCIA))
+                .setScale(2, RoundingMode.HALF_UP);
+
         ResumenDTO resumen = new ResumenDTO();
         resumen.setTotalCorporativo(totalCorporativo);
         resumen.setTotalB4(totalB4);
         resumen.setPeajesKusi(peajesKusi);
+        resumen.setTotalBruto(totalBruto);
+        resumen.setGanancia(ganancia);
         return resumen;
     }
 

@@ -2,7 +2,8 @@ import { api } from './api'
 
 /**
  * GET /servicios/resumen — totales de la semana actual (lunes a domingo).
- * Devuelve { totalCorporativo, totalB4, peajesKusi } como números.
+ * `ganancia` = base (Kusi + CMV + códigos con "ID") menos el 25%.
+ * `totalBruto` = esa base antes del descuento.
  */
 export async function obtenerResumen() {
   const dto = await api('/servicios/resumen')
@@ -10,6 +11,8 @@ export async function obtenerResumen() {
     totalCorporativo: Number(dto?.totalCorporativo ?? 0),
     totalB4: Number(dto?.totalB4 ?? 0),
     peajesKusi: Number(dto?.peajesKusi ?? 0),
+    totalBruto: Number(dto?.totalBruto ?? 0),
+    ganancia: Number(dto?.ganancia ?? 0),
   }
 }
 

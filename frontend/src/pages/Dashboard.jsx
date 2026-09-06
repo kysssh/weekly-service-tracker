@@ -14,8 +14,9 @@ export default function Dashboard() {
   const { datos: resumen, cargando, error, recargar } = usePeticion(obtenerResumen)
   useSesionExpira(error)
 
-  const ganancia =
-    (resumen?.totalCorporativo ?? 0) + (resumen?.totalB4 ?? 0)
+  const descuento = resumen
+    ? Math.max(0, resumen.totalBruto - resumen.ganancia)
+    : 0
 
   return (
     <div className="min-h-svh bg-fondo text-texto">
@@ -42,12 +43,15 @@ export default function Dashboard() {
                 Ganancia esta semana
               </p>
               <p className="mt-1 font-display text-5xl font-bold tracking-tight text-acento">
-                {formatearSoles(ganancia)}
+                {formatearSoles(resumen.ganancia)}
+              </p>
+              <p className="mt-1 text-xs text-texto-suave">
+                Ya con el 25 % descontado.
               </p>
 
               <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-borde pt-4 text-center">
-                <Detalle etiqueta="Corporativo" valor={resumen.totalCorporativo} />
-                <Detalle etiqueta="B4" valor={resumen.totalB4} />
+                <Detalle etiqueta="Bruto" valor={resumen.totalBruto} />
+                <Detalle etiqueta="Descuento 25 %" valor={descuento} prefijo="−" />
                 <Detalle etiqueta="Peajes Kusi" valor={resumen.peajesKusi} />
               </dl>
             </>
@@ -75,11 +79,12 @@ export default function Dashboard() {
   )
 }
 
-function Detalle({ etiqueta, valor }) {
+function Detalle({ etiqueta, valor, prefijo = '' }) {
   return (
     <div>
       <dt className="text-xs text-texto-suave">{etiqueta}</dt>
       <dd className="mt-0.5 text-sm font-semibold text-texto">
+        {prefijo}
         {formatearSoles(valor)}
       </dd>
     </div>
