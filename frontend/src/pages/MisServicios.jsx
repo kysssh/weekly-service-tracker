@@ -36,12 +36,16 @@ export default function MisServicios() {
           className="mt-4 flex rounded-xl border border-borde bg-superficie p-1"
         >
           <Pestania
+            id="tab-actual"
+            panelId="panel-servicios"
             activa={vista === 'actual'}
             onClick={() => setVista('actual')}
           >
             Esta semana
           </Pestania>
           <Pestania
+            id="tab-anteriores"
+            panelId="panel-servicios"
             activa={vista === 'anteriores'}
             onClick={() => setVista('anteriores')}
           >
@@ -49,7 +53,12 @@ export default function MisServicios() {
           </Pestania>
         </div>
 
-        <div className="mt-5">
+        <div
+          id="panel-servicios"
+          role="tabpanel"
+          aria-labelledby={vista === 'actual' ? 'tab-actual' : 'tab-anteriores'}
+          className="mt-5"
+        >
           {cargando && <Cargando texto="Cargando servicios…" />}
 
           {!cargando && error && (
@@ -88,11 +97,13 @@ export default function MisServicios() {
   )
 }
 
-function Pestania({ activa, onClick, children }) {
+function Pestania({ id, panelId, activa, onClick, children }) {
   return (
     <button
       type="button"
       role="tab"
+      id={id}
+      aria-controls={panelId}
       aria-selected={activa}
       onClick={onClick}
       className={`min-h-11 flex-1 rounded-lg px-3 text-sm font-semibold transition ${
