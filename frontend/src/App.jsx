@@ -3,6 +3,7 @@ import RutaProtegida from './components/RutaProtegida'
 import Dashboard from './pages/Dashboard'
 import LoginRegistro from './pages/LoginRegistro'
 import MisServicios from './pages/MisServicios'
+import RegistrarServicio from './pages/RegistrarServicio'
 
 function App() {
   return (
@@ -22,6 +23,14 @@ function App() {
         element={
           <RutaProtegida>
             <MisServicios />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/servicios/nuevo"
+        element={
+          <RutaProtegida>
+            <RegistrarServicio />
           </RutaProtegida>
         }
       />
