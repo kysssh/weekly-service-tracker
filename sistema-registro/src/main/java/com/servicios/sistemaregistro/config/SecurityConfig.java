@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,7 +27,7 @@ public class SecurityConfig {
 
     // Origenes permitidos por CORS. En produccion se define APP_CORS_ORIGINS
     // (coma-separado); si no, vale el default para desarrollo local.
-    @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}")
+    @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*,https://weekly-service-tracker-front.onrender.com}")
     private List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
@@ -49,7 +50,8 @@ public class SecurityConfig {
         // aqui el dominio del frontend desplegado (APP_CORS_ORIGINS).
         configuracion.setAllowedOriginPatterns(allowedOrigins);
 
-        // Métodos HTTP que tu frontend va a necesitar usar contra la API.
+        // Métodos HTTP que tu frontend va a necesitar usar contra la API,
+        // incluyendo OPTIONS para que el navegador pueda hacer el preflight.
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         // Permitimos cualquier header en la petición — en particular necesitamos
@@ -75,6 +77,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
+                        // Las peticiones OPTIONS (preflight de CORS) no llevan
+                        // credenciales; se permiten sin autenticacion para que
+                        // el navegador pueda negociar la peticion real.
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth", "/usuarios").permitAll()
                         .anyRequest().authenticated()
                 )
