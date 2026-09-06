@@ -28,6 +28,15 @@ export function borrarToken() {
   }
 }
 
+/** Decodifica un tramo base64url a texto UTF-8 (nombres con tilde o ñ incluidos). */
+function base64UrlADecodedText(segmento) {
+  const b64 = segmento.replace(/-/g, '+').replace(/_/g, '/')
+  const relleno = b64.length % 4 ? '='.repeat(4 - (b64.length % 4)) : ''
+  const binario = atob(b64 + relleno)
+  const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0))
+  return new TextDecoder('utf-8').decode(bytes)
+}
+
 /**
  * Decodifica el payload del JWT sin verificar la firma (eso lo hace el backend).
  * Sirve para leer el `sub` (nombre de usuario) y el `exp` en el cliente.
@@ -35,9 +44,7 @@ export function borrarToken() {
 export function decodificarToken(token) {
   if (!token) return null
   try {
-    const payloadB64 = token.split('.')[1]
-    const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
-    return JSON.parse(json)
+    return JSON.parse(base64UrlADecodedText(token.split('.')[1]))
   } catch {
     return null
   }
