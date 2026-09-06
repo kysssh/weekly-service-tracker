@@ -1,0 +1,40 @@
+# Plantilla de configuracion.
+#
+# - Desarrollo local: copiar a application.properties (esta gitignored) y
+#   ajustar los valores. Los defaults ya apuntan a un PostgreSQL local.
+# - Despliegue: NO hace falta subir application.properties; basta con definir
+#   estas variables de entorno en la plataforma (Railway, Render, etc.):
+#     SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD
+#     JWT_SECRET            (obligatoria, generar: openssl rand -base64 32)
+#     APP_CORS_ORIGINS      (ej: https://tu-frontend.netlify.app)
+#     PORT                  (la plataforma la inyecta sola)
+
+spring.application.name=sistema-registro
+
+# --- Base de datos ---
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sistema_registro}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:postgres}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:CAMBIAR}
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# --- JPA / Hibernate ---
+# Flyway crea y versiona el esquema; Hibernate solo valida.
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=${JPA_SHOW_SQL:false}
+
+# --- Flyway ---
+# Permite adoptar Flyway sobre una base que ya tiene tablas (entorno local).
+# En una base vacia (produccion) simplemente corre V1.
+spring.flyway.baseline-on-migrate=true
+
+# --- Servidor ---
+server.port=${PORT:8080}
+
+# --- Seguridad ---
+# EN PRODUCCION ES OBLIGATORIO definir JWT_SECRET. Sin properties file y sin
+# esa variable, la aplicacion no arranca (a proposito).
+jwt.secret=${JWT_SECRET:REEMPLAZAR_POR_UN_SECRETO_BASE64_DE_32_BYTES}
+
+# Origenes permitidos por CORS, separados por coma.
+app.cors.allowed-origins=${APP_CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}

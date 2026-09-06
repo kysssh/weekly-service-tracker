@@ -1,6 +1,7 @@
 package com.servicios.sistemaregistro.config;
 
 import com.servicios.sistemaregistro.security.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +24,11 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    // Origenes permitidos por CORS. En produccion se define APP_CORS_ORIGINS
+    // (coma-separado); si no, vale el default para desarrollo local.
+    @Value("${app.cors.allowed-origins:http://localhost:*,http://127.0.0.1:*}")
+    private List<String> allowedOrigins;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -38,14 +44,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuracion = new CorsConfiguration();
 
-        // Permitimos cualquier puerto de localhost (http o https), sin abrirlo
-        // a internet entero. El patrón "http://localhost:*" cubre Live Server,
-        // el navegador embebido de IntelliJ, o cualquier puerto que uses mientras
-        // se desarrolla el frontend en la computadora.
-        configuracion.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
+        // Origenes permitidos. En local, el default de app.cors.allowed-origins
+        // cubre cualquier puerto de localhost/127.0.0.1. En produccion se pone
+        // aqui el dominio del frontend desplegado (APP_CORS_ORIGINS).
+        configuracion.setAllowedOriginPatterns(allowedOrigins);
 
         // Métodos HTTP que tu frontend va a necesitar usar contra la API.
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
